@@ -1,0 +1,16 @@
+services:
+  scraper:
+    build: .
+    image: single-agent-scraper:latest
+    env_file:
+      - .env
+    environment:
+      OUTPUT_DIR: /app/output
+      PYTHONPATH: /app/src
+    volumes:
+      - ./output:/app/output
+    shm_size: "1gb"
+    # Uso:
+    #   docker compose run --rm scraper scrape "https://..." --goal "productos..." -i
+    stdin_open: true
+    tty: true
