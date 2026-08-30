@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, TypeVar
 from urllib.parse import urlparse
 
 from pydantic import BaseModel
 
-from scraper_agent.config import Settings, get_settings
+from scraper_agent.config import LlmProvider, Settings, get_settings
 from scraper_agent.extractor import StructuredExtractor
 from scraper_agent.image_downloader import attach_local_images
 from scraper_agent.logging_setup import get_logger, setup_logging
@@ -145,7 +145,7 @@ async def scrape(
     goal: str | None = None,
     response_model: type[T] | None = None,
     download_images: bool | None = None,
-    provider: Literal["groq", "gemini"] | None = None,
+    provider: LlmProvider | None = None,
     settings: Settings | None = None,
     persist: bool = True,
 ) -> ScrapedResult[T]:

@@ -6,7 +6,7 @@ import json
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -15,9 +15,10 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field, HttpUrl
 
 from scraper_agent.agent import scrape
-from scraper_agent.config import get_settings
+from scraper_agent.config import LlmProvider, get_settings
 from scraper_agent.logging_setup import setup_logging
 from scraper_agent.models import ProductListing
+from scraper_agent.providers import LLM_PROVIDERS
 
 APP_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = APP_DIR / "templates"
@@ -40,7 +41,7 @@ class ScrapeRequest(BaseModel):
         default="productos con foto precio descripcion",
         max_length=500,
     )
-    provider: Literal["groq", "gemini"] = "groq"
+    provider: LlmProvider = "groq"
     download_images: bool = True
 
 
@@ -180,6 +181,7 @@ async def home(request: Request) -> HTMLResponse:
         "index.html",
         {
             "default_provider": settings.llm_provider,
+            "llm_providers": list(LLM_PROVIDERS),
             "reports": _list_recent_reports(),
         },
     )

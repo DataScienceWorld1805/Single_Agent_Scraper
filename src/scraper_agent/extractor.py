@@ -6,7 +6,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from scraper_agent.config import Settings, get_settings
+from scraper_agent.config import LlmProvider, Settings, get_settings
 from scraper_agent.logging_setup import get_logger
 from scraper_agent.providers import get_instructor_client
 
@@ -83,9 +83,9 @@ class StructuredExtractor:
         goal: str | None = None,
         provider: str | None = None,
     ) -> T:
-        from typing import Literal, cast
+        from typing import cast
 
-        chosen = cast(Literal["groq", "gemini"] | None, provider)
+        chosen = cast(LlmProvider | None, provider)
         client, model, used_provider = get_instructor_client(chosen, self.settings)
         max_retries = self.settings.max_extraction_retries
 

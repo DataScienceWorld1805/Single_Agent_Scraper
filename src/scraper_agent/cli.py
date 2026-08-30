@@ -34,7 +34,7 @@ def scrape_cmd(
         None,
         "--provider",
         "-p",
-        help="groq | gemini (default: LLM_PROVIDER del .env)",
+        help="groq | gemini | openai | anthropic | mistral | deepseek | openrouter | ollama",
     ),
     download_images: bool = typer.Option(
         False,
@@ -63,6 +63,7 @@ def scrape_cmd(
     from scraper_agent.agent import scrape
     from scraper_agent.config import get_settings
     from scraper_agent.models import GenericPage, ProductListing
+    from scraper_agent.providers import LLM_PROVIDERS
 
     settings = get_settings()
     setup_logging(settings.log_level)
@@ -70,8 +71,8 @@ def scrape_cmd(
     response_model = ProductListing if schema == "products" else GenericPage
     chosen_provider = None
     if provider:
-        if provider not in {"groq", "gemini"}:
-            console.print("[red]--provider debe ser groq o gemini[/red]")
+        if provider not in LLM_PROVIDERS:
+            console.print(f"[red]--provider debe ser uno de: {', '.join(LLM_PROVIDERS)}[/red]")
             raise typer.Exit(code=2)
         chosen_provider = provider  # type: ignore[assignment]
 

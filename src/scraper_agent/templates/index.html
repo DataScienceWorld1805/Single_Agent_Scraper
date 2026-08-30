@@ -268,8 +268,19 @@
         <div>
           <label for="provider">LLM</label>
           <select id="provider" name="provider">
-            <option value="groq" {% if default_provider == 'groq' %}selected{% endif %}>Groq</option>
-            <option value="gemini" {% if default_provider == 'gemini' %}selected{% endif %}>Gemini</option>
+            {% set labels = {
+              'groq': 'Groq',
+              'gemini': 'Gemini',
+              'openai': 'OpenAI',
+              'anthropic': 'Anthropic (Claude)',
+              'mistral': 'Mistral',
+              'deepseek': 'DeepSeek',
+              'openrouter': 'OpenRouter',
+              'ollama': 'Ollama (local)'
+            } %}
+            {% for p in llm_providers %}
+            <option value="{{ p }}" {% if default_provider == p %}selected{% endif %}>{{ labels.get(p, p) }}</option>
+            {% endfor %}
           </select>
         </div>
       </div>

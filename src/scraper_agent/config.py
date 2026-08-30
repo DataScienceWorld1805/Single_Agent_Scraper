@@ -8,6 +8,25 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+LlmProvider = Literal[
+    "groq",
+    "gemini",
+    "openai",
+    "anthropic",
+    "mistral",
+    "deepseek",
+    "openrouter",
+    "ollama",
+]
+
+_PLACEHOLDER_PREFIXES = (
+    "gsk_your",
+    "your_",
+    "sk-your",
+    "sk-ant-your",
+    "ollama_local",
+)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -16,13 +35,40 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    llm_provider: Literal["groq", "gemini"] = "groq"
+    llm_provider: LlmProvider = "groq"
 
+    # Groq (sin cambios de defaults)
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
 
+    # Gemini (sin cambios de defaults)
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.6-flash"
+
+    # OpenAI
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4.1-mini"
+
+    # Anthropic (Claude)
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-5"
+
+    # Mistral
+    mistral_api_key: str = ""
+    mistral_model: str = "mistral-small-latest"
+
+    # DeepSeek
+    deepseek_api_key: str = ""
+    deepseek_model: str = "deepseek-chat"
+
+    # OpenRouter (agregador)
+    openrouter_api_key: str = ""
+    openrouter_model: str = "openai/gpt-4.1-mini"
+
+    # Ollama (local)
+    ollama_api_key: str = "ollama"
+    ollama_model: str = "llama3.2"
+    ollama_base_url: str = "http://127.0.0.1:11434/v1"
 
     http_timeout: float = 30.0
     playwright_timeout: int = 45_000
@@ -73,23 +119,40 @@ class Settings(BaseSettings):
             return []
         return [p.strip() for p in self.proxy_list.split(",") if p.strip()]
 
-    def resolve_model(self, provider: Literal["groq", "gemini"] | None = None) -> str:
+    def resolve_model(self, provider: LlmProvider | None = None) -> str:
         chosen = provider or self.llm_provider
-        return self.groq_model if chosen == "groq" else self.gemini_model
+        mapping = {
+            "groq": self.groq_model,
+            "gemini": self.gemini_model,
+            "openai": self.openai_model,
+            "anthropic": self.anthropic_model,
+            "mistral": self.mistral_model,
+            "deepseek": self.deepseek_model,
+            "openrouter": self.openrouter_model,
+            "ollama": self.ollama_model,
+        }
+        return mapping[chosen]
 
-    def require_api_key(self, provider: Literal["groq", "gemini"] | None = None) -> str:
+    def require_api_key(self, provider: LlmProvider | None = None) -> str:
         chosen = provider or self.llm_provider
-        if chosen == "groq":
-            if not self.groq_api_key or self.groq_api_key.startswith("gsk_your"):
-                raise ValueError(
-                    "GROQ_API_KEY no configurada. Copiá .env.example a .env y pegá tu key."
-                )
-            return self.groq_api_key
-        if not self.gemini_api_key or self.gemini_api_key.startswith("your_gemini"):
+        key_map: dict[LlmProvider, tuple[str, str]] = {
+            "groq": (self.groq_api_key, "GROQ_API_KEY"),
+            "gemini": (self.gemini_api_key, "GEMINI_API_KEY"),
+            "openai": (self.openai_api_key, "OPENAI_API_KEY"),
+            "anthropic": (self.anthropic_api_key, "ANTHROPIC_API_KEY"),
+            "mistral": (self.mistral_api_key, "MISTRAL_API_KEY"),
+            "deepseek": (self.deepseek_api_key, "DEEPSEEK_API_KEY"),
+            "openrouter": (self.openrouter_api_key, "OPENROUTER_API_KEY"),
+            "ollama": (self.ollama_api_key or "ollama", "OLLAMA_API_KEY"),
+        }
+        raw, env_name = key_map[chosen]
+        if chosen == "ollama":
+            return raw or "ollama"
+        if not raw or raw.lower().startswith(_PLACEHOLDER_PREFIXES) or raw.startswith("your_"):
             raise ValueError(
-                "GEMINI_API_KEY no configurada. Copiá .env.example a .env y pegá tu key."
+                f"{env_name} no configurada. Copiá .env.example a .env y pegá tu key."
             )
-        return self.gemini_api_key
+        return raw
 
 
 @lru_cache
