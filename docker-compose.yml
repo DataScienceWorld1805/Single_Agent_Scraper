@@ -7,10 +7,11 @@ services:
     environment:
       OUTPUT_DIR: /app/output
       PYTHONPATH: /app/src
+    ports:
+      - "8000:8000"
     volumes:
       - ./output:/app/output
     shm_size: "1gb"
-    # Uso:
-    #   docker compose run --rm scraper scrape "https://..." --goal "productos..." -i
-    stdin_open: true
-    tty: true
+    # Interfaz: http://localhost:8000
+    # CLI: docker compose run --rm --entrypoint python scraper -m scraper_agent.cli scrape "URL" -i --no-open
+    restart: unless-stopped

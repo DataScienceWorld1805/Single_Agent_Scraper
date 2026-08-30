@@ -9,7 +9,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Dependencias de sistema mínimas + Chromium para Playwright
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
@@ -27,6 +26,7 @@ RUN mkdir -p /app/output \
     && pip install --no-cache-dir -e .
 
 VOLUME ["/app/output"]
+EXPOSE 8000
 
-ENTRYPOINT ["python", "-m", "scraper_agent.cli"]
-CMD ["--help"]
+# Por defecto: interfaz web. CLI: docker compose run --rm --entrypoint python scraper -m scraper_agent.cli ...
+CMD ["python", "-m", "uvicorn", "scraper_agent.webapp:app", "--host", "0.0.0.0", "--port", "8000"]
