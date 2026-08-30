@@ -146,6 +146,25 @@ async def scrape(
     if persist:
         path = _persist_json(result, cfg.output_dir, url)  # type: ignore[arg-type]
         log.info("scrape_persisted", path=str(path))
+        if isinstance(data, ProductListing):
+            try:
+                from scraper_agent.reporter import generate_reports
+
+                report_paths = await generate_reports(
+                    result,  # type: ignore[arg-type]
+                    output_dir=cfg.output_dir,
+                    json_path=path,
+                    make_pdf=True,
+                )
+                log.info(
+                    "report_generated",
+                    html=str(report_paths.html_path),
+                    pdf=str(report_paths.pdf_path),
+                )
+            except Exception as exc:  # noqa: BLE001
+                log.warning("report_generation_failed", error=str(exc))
+                result.warnings.append(f"No se pudo generar informe HTML/PDF: {exc}")
+                path.write_text(result.to_json(), encoding="utf-8")
 
     log.info(
         "scrape_done",
