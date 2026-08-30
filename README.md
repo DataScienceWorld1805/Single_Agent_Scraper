@@ -25,24 +25,20 @@ cp .env.example .env
 # Editá GROQ_API_KEY y/o GEMINI_API_KEY
 ```
 
-## Uso con Docker (recomendado)
+## Interfaz web
+
+Con Docker Desktop:
 
 ```bash
-docker compose build
-
-docker compose run --rm scraper scrape "https://www.mercadolibre.com.ar/..." \
-  --goal "productos con foto precio descripcion" \
-  --provider groq \
-  --download-images
+docker compose up -d --build
 ```
 
-El JSON y las imágenes quedan en `./output` del host.
+Abrí [http://localhost:8000](http://localhost:8000): pegá la URL y tocá **Scrapear**.
 
-Ayuda del CLI:
+CLI (opcional):
 
 ```bash
-docker compose run --rm scraper --help
-docker compose run --rm scraper scrape --help
+docker compose run --rm --entrypoint python scraper -m scraper_agent.cli scrape "URL" -i --no-open
 ```
 
 ## Uso local (sin Docker)
@@ -124,7 +120,7 @@ Ver [`.env.example`](.env.example). Las más importantes:
 - `LLM_PROVIDER=groq|gemini`
 - `GROQ_API_KEY` / `GEMINI_API_KEY`
 - `GROQ_MODEL=openai/gpt-oss-120b` (default actual en free tier)
-- `GEMINI_MODEL=gemini-2.0-flash`
+- `GEMINI_MODEL=gemini-3.6-flash`
 - `PROXY_LIST` (opcional, separados por coma)
 - `DOWNLOAD_IMAGES` / `OUTPUT_DIR`
 - `MAX_MARKDOWN_CHARS=12000` (importante para el TPM free de Groq)
