@@ -51,8 +51,9 @@ class ProductListing(BaseModel):
         description="Lista de productos encontrados en la página",
     )
     page_title: str | None = None
-    scraped_at: datetime = Field(
+    scraped_at: datetime | None = Field(
         default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp ISO del scrape; si falta, el agente lo completa",
     )
 
 
