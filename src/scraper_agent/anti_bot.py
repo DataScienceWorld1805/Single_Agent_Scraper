@@ -93,9 +93,12 @@ def looks_like_block(status_code: int, body: str, final_url: str | None = None) 
 
 def looks_like_js_heavy(html: str, extracted_text: str) -> bool:
     """Heurística: mucho script / poco texto útil → necesita browser."""
+    low = html.lower()
+    if "app-root" in low or "ng-version" in low or "ng-app" in low:
+        return True
     if len(extracted_text.strip()) < 200 and html.lower().count("<script") >= 5:
         return True
-    if "id=\"__next\"" in html or "id=\"root\"" in html or "ng-app" in html:
+    if 'id="__next"' in html or 'id="root"' in html:
         if len(extracted_text.strip()) < 400:
             return True
     return False

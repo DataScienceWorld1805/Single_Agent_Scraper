@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Single Agent Scraper</title>
+  <style>
+    :root {
+      --bg: #0e1512;
+      --panel: #16211c;
+      --ink: #e7f0ea;
+      --muted: #9bb0a5;
+      --line: #2a3b33;
+      --accent: #3ecf8e;
+      --accent-ink: #062116;
+      --danger: #ff7b72;
+      --warn: #f0c674;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at top, rgba(62, 207, 142, 0.12), transparent 45%),
+        linear-gradient(180deg, #101a16 0%, var(--bg) 55%);
+    }
+    .wrap {
+      width: min(760px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 3rem 0 4rem;
+    }
+    .brand {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.1;
+    }
+    .lead {
+      margin: 0 0 1.8rem;
+      color: var(--muted);
+      max-width: 42ch;
+    }
+    .panel {
+      background: rgba(22, 33, 28, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.25rem;
+      backdrop-filter: blur(8px);
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+    input[type="url"], input[type="text"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #0f1814;
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 0.85rem 0.95rem;
+      font-size: 1rem;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(62, 207, 142, 0.15);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+      margin-top: 0.9rem;
+    }
+    @media (max-width: 640px) {
+      .row { grid-template-columns: 1fr; }
+    }
+    .checks {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checks input { accent-color: var(--accent); width: 1rem; height: 1rem; }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.15rem;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.85rem 1.3rem;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+    .status {
+      margin-top: 1rem;
+      min-height: 1.4rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .status.error { color: var(--danger); }
+    .status.warn { color: var(--warn); }
+    .result {
+      display: none;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+    .result.show { display: block; }
+    .result h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    .links a {
+      text-decoration: none;
+      color: var(--accent-ink);
+      background: var(--accent);
+      padding: 0.55rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .links a.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .preview {
+      display: grid;
+      gap: 0.55rem;
+    }
+    .preview-item {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.55rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #101a16;
+    }
+    .preview-item img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #24332c;
+    }
+    .preview-item .t { font-weight: 650; font-size: 0.92rem; }
+    .preview-item .p { color: var(--accent); font-weight: 700; white-space: nowrap; }
+    .recent {
+      margin-top: 2rem;
+    }
+    .recent-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .recent h2 {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 650;
+      margin: 0;
+    }
+    button.danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(255, 123, 114, 0.45);
+      padding: 0.45rem 0.85rem;
+      font-size: 0.85rem;
+    }
+    button.danger:hover {
+      background: rgba(255, 123, 114, 0.12);
+    }
+    button.danger.small {
+      padding: 0.25rem 0.65rem;
+      font-size: 0.8rem;
+      border-radius: 999px;
+    }
+    .recent ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.5rem;
+    }
+    .recent li {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.7rem 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(22, 33, 28, 0.7);
+    }
+    .recent .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+    .recent a { color: var(--accent); text-decoration: none; font-weight: 650; }
+    .recent .empty {
+      color: var(--muted);
+      font-size: 0.92rem;
+      padding: 0.4rem 0;
+    }
+    .spinner {
+      display: inline-block;
+      width: 0.9rem;
+      height: 0.9rem;
+      border: 2px solid rgba(62,207,142,0.25);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: -2px;
+      margin-right: 0.4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">Single Agent Scraper</div>
+    <h1>Pegá una URL y scrapea</h1>
+    <p class="lead">El agente descarga la página, extrae productos (foto, precio, descripción) y arma informe web + PDF.</p>
+
+    <form class="panel" id="scrape-form">
+      <label for="url">URL del sitio</label>
+      <input id="url" name="url" type="url" required placeholder="https://ejemplo.com/productos" />
+
+      <div class="row">
+        <div>
+          <label for="goal">Objetivo (opcional)</label>
+          <input id="goal" name="goal" type="text" value="productos con foto precio descripcion" />
+        </div>
+        <div>
+          <label for="provider">LLM</label>
+          <select id="provider" name="provider">
+            <option value="groq" {% if default_provider == 'groq' %}selected{% endif %}>Groq</option>
+            <option value="gemini" {% if default_provider == 'gemini' %}selected{% endif %}>Gemini</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="checks">
+        <input id="download_images" type="checkbox" checked />
+        Descargar fotos de producto
+      </label>
+
+      <div class="actions">
+        <button type="submit" id="submit-btn">Scrapear</button>
+      </div>
+      <div class="status" id="status"></div>
+
+      <div class="result" id="result">
+        <h2 id="result-title">Resultado</h2>
+        <div class="links" id="result-links"></div>
+        <div class="preview" id="result-preview"></div>
+      </div>
+    </form>
+
+    <section class="recent" id="reports-section">
+      <div class="recent-head">
+        <h2>Informes recientes</h2>
+        <button type="button" class="danger" id="clear-reports-btn" {% if not reports %}hidden{% endif %}>
+          Borrar informes
+        </button>
+      </div>
+      <ul id="reports-list">
+        {% for r in reports %}
+        <li data-name="{{ r.name }}">
+          <span>{{ r.name }}</span>
+          <span class="meta">
+            <a href="{{ r.html_url }}" target="_blank" rel="noopener">Ver web</a>
+            {% if r.pdf_url %}
+            <a href="{{ r.pdf_url }}" target="_blank" rel="noopener">PDF</a>
+            {% endif %}
+            <button type="button" class="danger small delete-one" data-name="{{ r.name }}">Borrar</button>
+          </span>
+        </li>
+        {% else %}
+        <li class="empty" id="reports-empty">No hay informes todavía.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById("scrape-form");
+    const statusEl = document.getElementById("status");
+    const btn = document.getElementById("submit-btn");
+    const result = document.getElementById("result");
+    const resultTitle = document.getElementById("result-title");
+    const resultLinks = document.getElementById("result-links");
+    const resultPreview = document.getElementById("result-preview");
+    const reportsList = document.getElementById("reports-list");
+    const clearReportsBtn = document.getElementById("clear-reports-btn");
+
+    function renderReports(reports) {
+      const items = reports || [];
+      clearReportsBtn.hidden = items.length === 0;
+      if (!items.length) {
+        reportsList.innerHTML = '<li class="empty" id="reports-empty">No hay informes todavía.</li>';
+        return;
+      }
+      reportsList.innerHTML = items.map((r) => {
+        const pdf = r.pdf_url
+          ? `<a href="${r.pdf_url}" target="_blank" rel="noopener">PDF</a>`
+          : "";
+        return `<li data-name="${escapeHtml(r.name)}">
+          <span>${escapeHtml(r.name)}</span>
+          <span class="meta">
+            <a href="${r.html_url}" target="_blank" rel="noopener">Ver web</a>
+            ${pdf}
+            <button type="button" class="danger small delete-one" data-name="${escapeHtml(r.name)}">Borrar</button>
+          </span>
+        </li>`;
+      }).join("");
+    }
+
+    async function refreshReports() {
+      const res = await fetch("/api/reports");
+      const data = await res.json();
+      if (res.ok) renderReports(data.reports || []);
+    }
+
+    async function deleteReport(name) {
+      if (!confirm(`¿Borrar el informe "${name}" y sus archivos (HTML, PDF, JSON, fotos)?`)) {
+        return;
+      }
+      const res = await fetch(`/api/reports/${encodeURIComponent(name)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "No se pudo borrar el informe");
+      renderReports(data.reports || []);
+    }
+
+    async function deleteAllReports() {
+      if (!confirm("¿Borrar TODOS los informes y archivos de scrapeo relacionados?")) {
+        return;
+      }
+      clearReportsBtn.disabled = true;
+      try {
+        const res = await fetch("/api/reports", { method: "DELETE" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "No se pudieron borrar los informes");
+        renderReports(data.reports || []);
+        statusEl.className = "status";
+        statusEl.textContent = `Se borraron ${data.deleted_count || 0} informe(s).`;
+      } catch (err) {
+        statusEl.className = "status error";
+        statusEl.textContent = err.message || String(err);
+      } finally {
+        clearReportsBtn.disabled = false;
+      }
+    }
+
+    clearReportsBtn.addEventListener("click", () => {
+      deleteAllReports().catch((err) => {
+        statusEl.className = "status error";
+        statusEl.textContent = err.message || String(err);
+      });
+    });
+
+    reportsList.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.classList.contains("delete-one")) return;
+      const name = target.getAttribute("data-name");
+      if (!name) return;
+      deleteReport(name).catch((err) => {
+        statusEl.className = "status error";
+        statusEl.textContent = err.message || String(err);
+      });
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      result.classList.remove("show");
+      statusEl.className = "status";
+      statusEl.innerHTML = '<span class="spinner"></span>Scrapeando… puede tardar 30–90s';
+      btn.disabled = true;
+
+      const body = {
+        url: document.getElementById("url").value.trim(),
+        goal: document.getElementById("goal").value.trim(),
+        provider: document.getElementById("provider").value,
+        download_images: document.getElementById("download_images").checked,
+      };
+
+      try {
+        const res = await fetch("/api/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Error al scrapear");
+        }
+
+        statusEl.textContent = data.blocked
+          ? "Scrape terminó con posible bloqueo anti-bot. Revisá warnings."
+          : `Listo: ${data.items_count} productos (${data.fetch_method}).`;
+        if (data.blocked) statusEl.classList.add("warn");
+
+        resultTitle.textContent = `Resultado — ${data.items_count} productos`;
+        resultLinks.innerHTML = "";
+        if (data.html_url) {
+          resultLinks.innerHTML += `<a href="${data.html_url}" target="_blank" rel="noopener">Abrir informe web</a>`;
+        }
+        if (data.pdf_url) {
+          resultLinks.innerHTML += `<a class="secondary" href="${data.pdf_url}" target="_blank" rel="noopener">Descargar PDF</a>`;
+        }
+
+        resultPreview.innerHTML = (data.items || []).map((item) => {
+          const price = item.price == null ? "—" : `${item.price} ${item.currency || ""}`;
+          const img = item.image
+            ? `<img src="${item.image}" alt="" />`
+            : `<div style="width:52px;height:52px;border-radius:8px;background:#24332c"></div>`;
+          return `<div class="preview-item">${img}<div class="t">${escapeHtml(item.title || "")}</div><div class="p">${escapeHtml(price)}</div></div>`;
+        }).join("");
+
+        result.classList.add("show");
+        await refreshReports();
+      } catch (err) {
+        statusEl.className = "status error";
+        statusEl.textContent = err.message || String(err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+  </script>
+</body>
+</html>

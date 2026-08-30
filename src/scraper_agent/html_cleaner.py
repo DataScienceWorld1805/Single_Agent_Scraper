@@ -133,9 +133,10 @@ def html_to_clean_document(
     base_url: str,
     *,
     max_chars: int = 40_000,
+    max_images: int = 40,
 ) -> CleanDocument:
     pruned = prune_html(html)
-    image_urls = extract_images(html, base_url)
+    image_urls = extract_images(html, base_url, limit=max_images)
 
     downloaded = trafilatura.extract(
         pruned,

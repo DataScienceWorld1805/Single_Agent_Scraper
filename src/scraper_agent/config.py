@@ -22,13 +22,14 @@ class Settings(BaseSettings):
     groq_model: str = "openai/gpt-oss-120b"
 
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-3.6-flash"
 
     http_timeout: float = 30.0
     playwright_timeout: int = 45_000
     max_fetch_retries: int = 3
     max_extraction_retries: int = 3
     max_markdown_chars: int = 12_000
+    max_products: int = Field(default=40, ge=1, le=500)
 
     proxy_list: str = ""
     download_images: bool = False

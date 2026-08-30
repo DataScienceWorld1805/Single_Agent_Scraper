@@ -44,28 +44,39 @@ def _resolve_image_src(
     report_dir: Path,
     embed_base64: bool,
 ) -> str | None:
+    """Prefiere URL remota (rápido para HTML/PDF). Base64 solo si no hay URL y el archivo es chico."""
+    remote: str | None = None
+    local_path: Path | None = None
     for image in item.images:
-        local = image.local_path
-        if local:
-            path = Path(local)
+        if image.url and not image.url.startswith("data:"):
+            remote = image.url
+            break
+    for image in item.images:
+        if image.local_path:
+            path = Path(image.local_path)
             if not path.is_absolute():
-                # Rutas relativas al cwd del scrape (p.ej. output/images/...)
                 path = Path.cwd() / path
             if path.exists():
-                if embed_base64:
-                    mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
-                    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-                    return f"data:{mime};base64,{encoded}"
-                try:
-                    rel = path.resolve().relative_to(report_dir.resolve())
-                    return rel.as_posix()
-                except ValueError:
-                    # Copiar referencia via file URI relativa creando symlink/copy no; usar data URI
-                    mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
-                    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-                    return f"data:{mime};base64,{encoded}"
-        if image.url and not image.url.startswith("data:"):
-            return image.url
+                local_path = path
+                break
+
+    if remote:
+        return remote
+
+    if local_path is not None:
+        size = local_path.stat().st_size
+        if embed_base64 and size <= 200_000:
+            mime = mimetypes.guess_type(local_path.name)[0] or "image/jpeg"
+            encoded = base64.b64encode(local_path.read_bytes()).decode("ascii")
+            return f"data:{mime};base64,{encoded}"
+        try:
+            rel = local_path.resolve().relative_to(report_dir.resolve())
+            return rel.as_posix()
+        except ValueError:
+            if size <= 200_000:
+                mime = mimetypes.guess_type(local_path.name)[0] or "image/jpeg"
+                encoded = base64.b64encode(local_path.read_bytes()).decode("ascii")
+                return f"data:{mime};base64,{encoded}"
     return None
 
 
@@ -411,7 +422,9 @@ async def render_pdf_from_html(html_path: Path, pdf_path: Path) -> Path:
         browser = await p.chromium.launch(headless=True)
         try:
             page = await browser.new_page()
-            await page.goto(html_path.resolve().as_uri(), wait_until="networkidle")
+            # networkidle se cuelga con muchas imágenes remotas (CDN).
+            await page.goto(html_path.resolve().as_uri(), wait_until="load", timeout=60_000)
+            await page.wait_for_timeout(1_500)
             await page.pdf(
                 path=str(pdf_path),
                 format="A4",
@@ -461,13 +474,12 @@ async def generate_reports(
     pdf_path = report_dir / "informe.pdf"
     pdf_name = pdf_path.name
 
-    # HTML web: embebe imágenes en base64 para que funcione abriendo el archivo
-    # sin depender de rutas relativas rotas a output/images.
+    # HTML/PDF usan URLs remotas de imagen (rápido). Base64 solo como fallback chico.
     web_html = build_report_html(
         scraped,
         report_dir=report_dir,
         pdf_name=pdf_name,
-        embed_images=True,
+        embed_images=False,
     )
     html_path.write_text(web_html, encoding="utf-8")
     log.info("report_html_written", path=str(html_path))

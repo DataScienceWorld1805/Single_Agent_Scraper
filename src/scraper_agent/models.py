@@ -74,7 +74,7 @@ T = TypeVar("T", bound=BaseModel)
 
 class ScrapedResult(BaseModel, Generic[T]):
     data: T
-    fetch_method: Literal["httpx", "playwright"]
+    fetch_method: Literal["httpx", "playwright", "api"]
     warnings: list[str] = Field(default_factory=list)
     raw_markdown_chars: int = 0
     blocked: bool = False
