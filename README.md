@@ -99,7 +99,19 @@ src/scraper_agent/
   config.py
 ```
 
-## Schemas
+## Informes (HTML + PDF)
+
+Cada scrape de productos genera automáticamente:
+
+- `output/reports/<nombre>/index.html` — catálogo web con fotos, precios y descripción
+- `output/reports/<nombre>/informe.pdf` — PDF descargable (botón en la web)
+
+Regenerar desde un JSON existente:
+
+```bash
+python -m scraper_agent.cli report output/books.toscrape.com_3060d727.json
+```
+
 
 - `ProductListing` / `ProductItem`: título, precio, moneda, descripción, imágenes (`url` + `local_path` si descargás).
 - `GenericPage`: contenido general de cualquier sitio.
