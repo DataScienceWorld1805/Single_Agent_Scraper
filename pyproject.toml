@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scraper-agent"
+version = "1.0.0"
+description = "Single Agent Web Scraper profesional con fetch híbrido y extracción LLM (Groq/Gemini)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27.0",
+    "playwright>=1.40.0",
+    "playwright-stealth>=1.0.6",
+    "tenacity>=8.2.0",
+    "selectolax>=0.3.21",
+    "trafilatura>=1.12.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "instructor>=1.7.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "openai>=1.55.0",
+    "google-genai>=1.0.0",
+    "structlog>=24.4.0",
+    "python-dotenv>=1.0.0",
+    "typer>=0.12.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0"]
+
+[project.scripts]
+scraper-agent = "scraper_agent.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
